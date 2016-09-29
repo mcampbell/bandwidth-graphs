@@ -3,5 +3,7 @@ data/speedtest.data
 data/st
 *.html
 utils/context.sh
+images/*.jpg
+
 
 
