@@ -99,7 +99,7 @@ This is *TOTALLY OPTIONAL*.  But if you want to use it...
 ** Running
 There are 2 steps to running this.
 
-- Run ~<root>/speedtest.sh~ periodically. How often is up to you. Note that this uses the
+- Run ~<root>/speedtest.sh [optional_context]~ periodically. How often is up to you. Note that this uses the
   https://speedtest.net system under the covers, so transfers a fair bit of data both up
   and down to determine how fast it can do it.
 
@@ -129,10 +129,10 @@ THAT THIS TEST WILL USE IT.
 
 You may run the report scripts directly if you want to pick and choose which to run when.
 
-- *Hour of Day* - ~<root>/reports/HOD.sh~ 
-- *Hour of Week* - ~<root>/reports/HOW.sh~ 
-- *Day of Week* - ~<root>/reports/DOW.sh~ 
-- *Trend* - ~<root>/reports/TREND.sh~  
+- *Hour of Day* - ~<root>/reporters/HOD.sh~ 
+- *Hour of Week* - ~<root>/reporters/HOW.sh~ 
+- *Day of Week* - ~<root>/reporters/DOW.sh~ 
+- *Trend* - ~<root>/reporters/TREND.sh~  
 
 You may run the reports as often as you like; they are idempotent. They work on whatever
 data is there, and completely eliminate previous runs. So running them more frequently
