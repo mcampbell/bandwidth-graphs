@@ -6,10 +6,13 @@ set autoscale
 set grid
 set xlabel "Time"
 set ylabel "Upload Mb/sec"
-set yrange [:15]   # our upper limit of ~12Mb + some room for stdev
+
+# CHANGEME!!  Set this value to be a bit above your rated UPLOAD speed in megabits/second.
+set yrange [:15]
+
 set grid
 set key box
-set output "trend-up.jpg"
+set output "../images/trend-up.jpg"
 plot "up_actual.trend.dat" using 1:2 title "Actual" with lines, \
      "" using 1:2 notitle with points, \
      "up_rated.trend.dat" using 1:2 title "Rated" with lines, \

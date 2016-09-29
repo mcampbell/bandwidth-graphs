@@ -13,22 +13,27 @@ cd $HERE
 
 trap 'rm *.trend.dat' EXIT
 
-CMD="docker run --rm -v $(pwd):/usr/src/myapp -w /usr/src/myapp mcampbell/sqlite3"
-ruby ./trend.rb up    < ./speedtest.data | tail -100 > up_actual.trend.dat
-ruby ./trend.rb down  < ./speedtest.data | tail -100 > down_actual.trend.dat
+################################################################################
+## CHANGEME!  Change the values (10, 50) in the next 2 lines to your rated upload and download speeds in megabits/second
+ruby ./trend.rb up   10 < ../data/speedtest.data | tail -100 > ./up_rated.trend.dat
+ruby ./trend.rb down 50 < ../data/speedtest.data | tail -100 > ./down_rated.trend.dat
+################################################################################
+# No changes below this line necessary.
+################################################################################
 
-ruby ./trend.rb up 10   < ./speedtest.data | tail -100 > up_rated.trend.dat
-ruby ./trend.rb down 50 < ./speedtest.data | tail -100 > down_rated.trend.dat
 
-up_90_pct=$(sort -k2n up_actual.trend.dat | head -10 | tail -1 | awk '{print $2}')
-down_90_pct=$(sort -k2n down_actual.trend.dat | head -10 | tail -1 | awk '{print $2}')
+ruby ./trend.rb up    < ../data/speedtest.data | tail -100 > ./up_actual.trend.dat
+ruby ./trend.rb down  < ../data/speedtest.data | tail -100 > ./down_actual.trend.dat
 
-ruby ./trend.rb up ${up_90_pct}  < ./speedtest.data | tail -100 > up_90pct.trend.dat
-ruby ./trend.rb down ${down_90_pct} < ./speedtest.data | tail -100 > down_90pct.trend.dat
+up_90_pct=$(sort -k2n ./up_actual.trend.dat | head -10 | tail -1 | awk '{print $2}')
+down_90_pct=$(sort -k2n ./down_actual.trend.dat | head -10 | tail -1 | awk '{print $2}')
 
-ruby ./exp_ma.rb -s 10 up_actual.trend.dat   > up_ma.trend.dat
-ruby ./exp_ma.rb -s 10 down_actual.trend.dat > down_ma.trend.dat
+ruby ./trend.rb up ${up_90_pct}  < ../data/speedtest.data | tail -100 > ./up_90pct.trend.dat
+ruby ./trend.rb down ${down_90_pct} < ../data/speedtest.data | tail -100 > ./down_90pct.trend.dat
 
-gnuplot ./trend-up.gnuplot
-gnuplot ./trend-down.gnuplot
+# (not currently used in any chart)
+ruby ../utils/exp_ma.rb -s 10 ./up_actual.trend.dat   > ./up_ma.trend.dat
+ruby ../utils/exp_ma.rb -s 10 ./down_actual.trend.dat > ./down_ma.trend.dat
 
+gnuplot ../gnuplot/trend-up.gnuplot 2>/dev/null
+gnuplot ../gnuplot/trend-down.gnuplot 2>/dev/null

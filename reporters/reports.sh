@@ -11,7 +11,14 @@ HERE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 cd $HERE
 
-./HOD.sh
+echo Generating hour of day reports
+./HOD.sh 
+
+echo Generating hour of week reports
 ./HOW.sh
+
+echo Generating day of week reports
 ./DOW.sh
+
+echo Generating trend reports
 ./TREND.sh

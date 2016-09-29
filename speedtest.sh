@@ -5,13 +5,19 @@
 set -eu
 
 ########################################
-FORCE=""
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
+THISBIN="$(basename $0)"
+
+########################################
 TRANSIENT=""
 PING_HOST="google.com"
 while getopts "hftp:" opt; do
-  case $opt in
-    h) echo "usage -o option1" ;;
-    f) FORCE="-f"          ;;
+  case "$opt" in
+    h)
+      echo "usage ${THISBIN} [-(t)ransient] [-(p)ing_host host]"
+      echo "     transient: if set, will not write to database.          Default: off/false"
+      echo "     ping_host: the host to ping to determine connectivity.  Default: google.com"
+      ;;
     t) TRANSIENT="-t"      ;;
     p) PING_HOST="$OPTARG" ;;
     *) echo "invalid argument"; exit -1 ;;
@@ -19,9 +25,6 @@ while getopts "hftp:" opt; do
 done
 shift $((OPTIND - 1))
 
-########################################
-HERE="$(cd "$(dirname "$0")" && pwd -P)"
-THISBIN="$(basename $0)"
 
 cd "$HERE"
 
@@ -29,72 +32,43 @@ cd "$HERE"
 ########################################
 # Error checking
 
-if ! which sqlite3 &>/dev/null; then
-  echo sqlite3 binary not found.  Exiting.
-  exit 1
-fi
+function check_exe() {
+  local exe="$1"
 
-DB="${HERE}/st"
+  if ! which "$exe" &> /dev/null; then
+    echo The "$exe" binary was not found, and is required.  Exiting.
+    exit 3
+  fi
+}
+
+export PATH=.:$PATH
+check_exe sqlite3
+check_exe gnuplot
+check_exe speedtest-cli
+
+########################################
+DB="${HERE}/data/st"
 
 if [ ! -r "$DB" ]; then
-  cat ./create.sql | sqlite3 "$DB"
+  cat ./utils/create.sql | sqlite3 "$DB"
 fi
 
 
-touch $HERE/lastrun-epoch.txt
-TOO_OLD=""
-NOW=$(date +%s)
-LASTRUN=$(cat $HERE/lastrun-epoch.txt)
-if [ -z "$LASTRUN" ]; then
-  DELTA="1000000" # something big
-  echo "$LASTRUN" > $HERE/lastrun-epoch.txt
-  TOO_OLD="too-old"
-else
-  DELTA=$(( NOW - LASTRUN ))
-  if [ "$DELTA" -ge 3600 ]; then  # run at least once an hour.
-    TOO_OLD="too-old"
-  fi
-fi
-
-
-
-# Run this a couple/few times an hour, but at random times.  We do this check every minute.
-if [ -n "$FORCE" ]; then
-  echo $(date) - ${DELTA} - FORCE was set.  Running. >> $HOME/logs/speedtest.sh.log
-  echo "$NOW" > $HERE/lastrun-epoch.txt
-
-elif [ -n "$TOO_OLD" ]; then  
-  echo $(date) - ${DELTA} - Last run was $DELTA seconds ago.  Running. >> $HOME/logs/speedtest.sh.log
-  echo "$NOW" > $HERE/lastrun-epoch.txt
-
-else 
-  CHANCE=$(( RANDOM % 600 ))
-  if [ "$CHANCE" -ge 10 ]; then  # 15 times / 600 mins; => ~1.5 times/hour
-    echo $(date) - ${DELTA} - Chance was $CHANCE.  Not running. >> $HOME/logs/speedtest.sh.log
-    exit 0
-  else
-    if [ "$DELTA" -lt 600 ]; then # but not more recently than 10 mins.
-      echo $(date) - ${DELTA} - Chance was $CHANCE but just ran.  Not running. >> $HOME/logs/speedtest.sh.log
-      exit 0
-    else
-      echo $(date) - ${DELTA} - Chance was $CHANCE.  Running. >> $HOME/logs/speedtest.sh.log
-      echo "$NOW" > $HERE/lastrun-epoch.txt
-    fi
-  fi
-fi
-
-
-T=/tmp/speedtest.$$
+T="/tmp/speedtest.$$"
 
 trap "rm $T" EXIT
 
+########################################
+# Set up context
 if [ -x ./utils/context.sh ]; then
-  CTX="$(echo "$*" | tr [:upper:] [:lower:] | tr -cs [a-z0-9] - | sed -e 's/-$//')@$(./utils/context.sh)"
+  CTX="$(./utils/context.sh "$*")"
 
 else
   CTX=""     
 fi   
 
+########################################
+# Current date/time
 # convert -0400 to -04:00
 Z=$(date +%z)
 ZONE="$(echo "$Z" | sed -e 's/..$//'):$(echo "$Z" | sed -e 's/^...//')"
@@ -102,11 +76,11 @@ DATE="$(date '+%Y-%m-%d %H:%M:%S')${ZONE}"
 
 DOW=$(( $(date +%w) + 0 ))
 HOD=$(( $(date +%H) + 0 ))
-HOW=$(( $(( $DOW * 24 )) + $HOD ))
+HOW=$(( $(( DOW * 24 )) + HOD ))
 
 # First do a connectivity check.  Set everything to 0 if it fails.
 
-if ping -c1 "$PING_HOST" 2>&1 | grep --silent ' 0% packet loss'; then
+if ping -c1 "$PING_HOST" &>/dev/null; then
   $HERE/speedtest-cli --simple > $T
   DOWN=$(grep 'Download:' $T | cut -f2 -d: | awk '{print $1}')
   UP=$(grep 'Upload:' $T | cut -f2 -d: | awk '{print $1}')
@@ -120,9 +94,9 @@ fi
 
 
 # Date, day-of-week, hour-of-day, hour-of-week, direction, metric, context
-echo "$DATE,$DOW,$HOD,$HOW,up,${UP},$CTX"
-echo "$DATE,$DOW,$HOD,$HOW,down,${DOWN},$CTX"
-echo "$DATE,$DOW,$HOD,$HOW,ping,${PING},$CTX"
+echo "$DATE,$DOW,$HOD,$HOW,up,${UP},$CTX"      | tee -a "$HERE"/data/speedtest.data
+echo "$DATE,$DOW,$HOD,$HOW,down,${DOWN},$CTX"  | tee -a "$HERE"/data/speedtest.data
+echo "$DATE,$DOW,$HOD,$HOW,ping,${PING},$CTX"  | tee -a "$HERE"/data/speedtest.data
 
 # create table bandwidth (
 #   test_time    TEXT,

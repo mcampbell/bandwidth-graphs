@@ -1,0 +1,7 @@
+speedtest-cli
+data/speedtest.data
+data/st
+*.html
+utils/context.sh
+
+

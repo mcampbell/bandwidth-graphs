@@ -1,0 +1,182 @@
+#+OPTIONS: toc:nil
+
+* Bandwidth Graphs
+
+A simple system to be run in cron a few times an hour (or as you like) which will gather
+upload and download speeds from a speedtest, and store them in a ~sqlite~ db.  Another set
+will parse this data and, along with gnuplot, generate some graphs.
+
+** Graphs Included
+- trend of the last 100 data points 
+- hour of day average with 1 standard deviation error bars
+- hour of week average with 1 standard deviation error bars
+- day of week average with 1 standard deviation error bars
+
+** Prerequisites
+
+For OSX, most of this stuff is either provided with the OS or can be ~brew install~'ed.
+For Ubuntu, or any other Linux, you can use your package manager of choice.
+
+
+- speedtest-cli
+  You can get this from: https://github.com/sivel/speedtest-cli
+
+  Note that my script requires that it be in THIS directory.  So if you install it in some
+  other way than ~wget~, you'll need to symlink to it or make a copy of it here.
+
+- ruby (tested with 2.x)
+  - ~gem install descriptive_statistics~
+  - ~gem install getopt~
+
+- python (tested with 2.7.x)
+
+- sqlite3 (tested with 3.8)
+
+- gnuplot (tested with 5.0)
+
+- a unixy system.  Tested with both Ubuntu/Linux and OSX.  Others might work. PR's welcome
+  for Windows, but may <diety> have mercy on your soul.
+
+** Setup
+
+Setup isn't difficult, but will require some editing of files, because I have this set up
+for me, with my bandwidth settings. Yours will no doubt be different.
+
+*** "Rated" Bandwidth 
+
+The graphs show a "rated" bandwidth.  Mine is 50/10.  I have no idea what yours is.  So
+you need to tell the system.  I may make this easier at some point.
+
+**** In ~<root>/gnuplot~:
+
+We need to modify the gnuplot files to adjust the graph to account for the +/- standard
+deviation bars.
+
+- In all of the "*-down.gnuplot" files, you will see lines like this:
+#+BEGIN_SRC 
+set yrange [:70]
+#+END_SRC
+
+Modify/edit the ~70~ to be above your rated download speed, in megabits/s.  My download is
+rated at 50Mb/s, so I set this to 70.  Adjust as needed.
+
+- In all of the "*-up.gnuplot" files, you will see lines like this:
+#+BEGIN_SRC 
+set yrange [:15]
+#+END_SRC
+
+Modify/edit the ~15~ to be above your rated upload speed, in megabits/s.  My upload is
+rated at 10Mb/s, so I set this to 15.  Adjust as needed.
+
+**** In ~<root>/utils~:
+
+We need to make similar modifications in some of the shell scripts which generate the
+reports, since there are hardcoded "rated" values in some of the scripts which generate
+the data for the lines.
+
+- In HOW.sh, change the ~10~ and ~50~ values in the lines following ~CHANGEME!~ to the
+  appropriate rated upload and download rates in megabits/second.  
+- In HOD.sh, do the same.
+- In DOW.sh, do the same.
+- In TREND.sh, do the same.
+
+*** "Context"
+I have a field in the database for "context".  This is just a string that can represent
+pretty much anything you want.  I use it to pass in the name of the system that was used
+to call it, and to have it determine which connection/SSID was used when it was called.  I
+have a number of SSIDs (and wired) connections in my house, so I like to know if my host
+dropped from one SSID and connected to another or something.
+
+This is *TOTALLY OPTIONAL*.  But if you want to use it...
+
+- In ~<root>/utils~, create a file called ~context.sh~ and have it echo anything you want.
+  There are a couple examples in there which concatenate whatever is passed in to it
+  (which will be whatever was passed into the main script when you call it), plus whatever
+  connection it can suss out.  You can copy whats there or write your own, or do nothing
+  if you don't want it.
+
+
+** Running
+There are 2 steps to running this.
+
+- Run ~<root>/speedtest.sh~ periodically. How often is up to you. Note that this uses the
+  https://speedtest.net system under the covers, so transfers a fair bit of data both up
+  and down to determine how fast it can do it.
+
+  I run this 1 or 2 times an hour.
+
+  You may pass arguments to this.  All it does is pass them to the "context generator" to
+  be put into the data.  See "Context" above.
+
+#+BEGIN_QUOTE
+THIS TEST USES DATA.  YOUR DATA.  IF YOU ARE ON A METERED OR LIMITED DATA PLAN, UNDERSTAND
+THAT THIS TEST WILL USE IT.
+#+END_QUOTE
+
+
+- Run ~<root>/reporters/reports.sh~. This is a wrapper script which just runs all the
+  report scripts.
+
+  There is NO NEED to run this more than once per hour, since no data being reported on is
+  any finer granularity than that. You can run it LESS often and still get all the data
+  points recorded, but of course you won't get the most recent data generated until you
+  do.
+
+  You can run the ~TREND.sh~ report (see below) as often as you run the ~speedtest.sh~ if
+  you have to know how each data point is adding to the trend.  I don't.
+
+** Reports
+
+You may run the report scripts directly if you want to pick and choose which to run when.
+
+- *Hour of Day* - ~<root>/reports/HOD.sh~ 
+- *Hour of Week* - ~<root>/reports/HOW.sh~ 
+- *Day of Week* - ~<root>/reports/DOW.sh~ 
+- *Trend* - ~<root>/reports/TREND.sh~  
+
+You may run the reports as often as you like; they are idempotent. They work on whatever
+data is there, and completely eliminate previous runs. So running them more frequently
+than data is generated doesn't hurt, it's just not necessary.
+
+** Where's the Output?
+
+All of the images generated are in ~<root>/images~.  The file name should be obvious, but
+in case not, they are all of the form:
+#+BEGIN_SRC 
+<type>-<up|down>.jpg
+#+END_SRC
+The types are:
+
+- hod: hour of day (0-23)
+- how: hour of week (0-167)
+- dow: day of week (0-7)
+- trend: trend of last 100 points
+
+Example:
+#+BEGIN_SRC 
+hod-up.jpg
+#+END_SRC
+is the "hour of day, upload speed" report.
+
+** Misc
+
+*** The Trend Report
+
+The trend report just shows a trend of the last 100 data points, whenever they were run.
+The percentile line is calculated by taking the line at which 90% (eg: 90 points) are
+below.  So, 90% of the time, your bandwidth is "at least as good than this".
+
+*** Datafile Recovery
+By default, the system will both write the data to the sqlite database, AND keep a flat
+file.  Both are in ~<root>/data~.
+
+If, by some chance, something blows up, you can recreate the data by running 
+#+BEGIN_SRC shell
+ruby <root>/utils/data-to-sqlite.rb < <root>/data/speedtest.data
+#+END_SRC
+
+This will output the SQL statements required to drop the database and recreate it from
+scratch.  This can take awhile depending on how much data you have.  And, shouldn't be
+necessary as a matter of course.
+
+I backup my data file in Dropbox via symlink.

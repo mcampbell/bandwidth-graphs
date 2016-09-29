@@ -1,12 +1,13 @@
 #!/usr/bin/env ruby
 
 # helper script for trend generation.  Basically a time parser for gnuplot output.
+# Uses the raw data file for input.  
 
 require 'time'
 
 want_dir = ARGV[0]
 hardcoded_val = ARGV[1]
-raise "usage: ruby trend.rb <directon> [value]" unless want_dir
+raise "usage: ruby trend.rb <direction> [value]" unless want_dir
 
 
 # 2016-05-27 19:59:01-04:00,5,19,139,up,11.82,e6510

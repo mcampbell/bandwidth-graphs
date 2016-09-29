@@ -1,0 +1,3 @@
+This is where the graph images will go.  Each run will eliminate the
+previous run's set, so if you want to save these from run to run,
+you'll need to do that on your own.

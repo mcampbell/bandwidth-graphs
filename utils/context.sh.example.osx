@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# This "context.sh" example simply echos whatever it is given, plus tries to get the name of the current network
+# connection/ssid/etc. being used.  *FOR ME* this was useful to use in select statements to make sure I was only getting
+# data back where my wifi was not being used vs. wired.  Or, vice versa.
+
+# In this case we are assuming we're being passed some string of words (host id, whatever), which we will strip out all
+# alphanum chars, replace with a '-', and remove any trailing '-' if present.
+
+# Then we get the current SSID using a OSX command.  (I haven't tried this with wired.  PR's welcome.)
+
+set -eu
+
+INPUT="$(echo "$*" | tr [:upper:] [:lower:] | tr -cs [a-z0-9] - | sed -e 's/-$//')"
+CONNECTIONS="$(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I  | grep ' SSID' | cut -f2 -d: | sed -e 's/^ *//')"
+
+echo "${INPUT}@${CONNECTIONS}"
+
