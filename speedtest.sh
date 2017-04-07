@@ -4,6 +4,8 @@
 
 set -eu
 
+echo Starting at $(date)
+
 ########################################
 HERE="$(cd "$(dirname "$0")" && pwd -P)"
 THISBIN="$(basename $0)"
@@ -41,7 +43,7 @@ function check_exe() {
   fi
 }
 
-export PATH=.:$PATH
+export PATH=.:$HOME/bin:$PATH
 check_exe sqlite3
 check_exe gnuplot
 check_exe speedtest-cli
@@ -56,7 +58,13 @@ fi
 
 T="/tmp/speedtest.$$"
 
-trap "rm $T" EXIT
+function cleanup() {
+  rm "$T" 2>/dev/null
+  echo Ending at $(date)
+  echo '--'
+}
+
+trap cleanup EXIT
 
 ########################################
 # Set up context
@@ -74,14 +82,14 @@ Z=$(date +%z)
 ZONE="$(echo "$Z" | sed -e 's/..$//'):$(echo "$Z" | sed -e 's/^...//')"
 DATE="$(date '+%Y-%m-%d %H:%M:%S')${ZONE}"
 
-DOW=$(( $(date +%w) + 0 ))
-HOD=$(( $(date +%H) + 0 ))
+DOW=$(( $(date +%w | sed -e 's/^0//') + 0 ))
+HOD=$(( $(date +%H | sed -e 's/^0//') + 0 ))
 HOW=$(( $(( DOW * 24 )) + HOD ))
 
 # First do a connectivity check.  Set everything to 0 if it fails.
 
 if ping -c1 "$PING_HOST" &>/dev/null; then
-  $HERE/speedtest-cli --simple > $T
+  speedtest-cli --simple > $T
   DOWN=$(grep 'Download:' $T | cut -f2 -d: | awk '{print $1}')
   UP=$(grep 'Upload:' $T | cut -f2 -d: | awk '{print $1}')
   PING=$(grep 'Ping:' $T | cut -f2 -d: | awk '{print $1}')
