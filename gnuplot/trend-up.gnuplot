@@ -8,7 +8,7 @@ set xlabel "Time"
 set ylabel "Upload Mb/sec"
 
 # CHANGEME!!  Set this value to be a bit above your rated UPLOAD speed in megabits/second.
-set yrange [:15]
+set yrange [:20]
 
 set grid
 set key box

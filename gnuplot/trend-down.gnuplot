@@ -8,7 +8,7 @@ set xlabel "Time"
 set ylabel "Download Mb/sec"
 
 # CHANGEME!!  Set this value to be a bit above your rated DOWNLOAD speed in megabits/second.
-set yrange [:70]
+set yrange [:100]
 
 set grid
 set key box

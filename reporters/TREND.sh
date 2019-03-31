@@ -15,8 +15,8 @@ trap 'rm *.trend.dat' EXIT
 
 ################################################################################
 ## CHANGEME!  Change the values (10, 50) in the next 2 lines to your rated upload and download speeds in megabits/second
-ruby ./trend.rb up   10 < ../data/speedtest.data | tail -100 > ./up_rated.trend.dat
-ruby ./trend.rb down 50 < ../data/speedtest.data | tail -100 > ./down_rated.trend.dat
+ruby ./trend.rb up   15 < ../data/speedtest.data | tail -100 > ./up_rated.trend.dat
+ruby ./trend.rb down 75 < ../data/speedtest.data | tail -100 > ./down_rated.trend.dat
 ################################################################################
 # No changes below this line necessary.
 ################################################################################

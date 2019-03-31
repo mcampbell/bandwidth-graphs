@@ -22,8 +22,8 @@ ruby ../utils/stdev.rb "$DB" "select hour_of_day, metric_value from bandwidth wh
 
 ################################################################################
 ## CHANGEME!  Change these values (10, 50) to whatever your rated upload and download speeds are (in megabits/second)
-sqlite3 -column "$DB" "select hour_of_day, 10 from bandwidth group by hour_of_day order by 1"    > ./up_rated.hod.dat
-sqlite3 -column "$DB" "select hour_of_day, 50 from bandwidth group by hour_of_day order by 1"    > ./down_rated.hod.dat
+sqlite3 -column "$DB" "select hour_of_day, 15 from bandwidth group by hour_of_day order by 1"    > ./up_rated.hod.dat
+sqlite3 -column "$DB" "select hour_of_day, 75 from bandwidth group by hour_of_day order by 1"    > ./down_rated.hod.dat
 ################################################################################
 # No changes below this line necessary.
 ################################################################################

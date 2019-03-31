@@ -6,7 +6,7 @@ set ylabel "Download Mb/sec"
 set xrange [-1:7]
 
 # CHANGEME!!  Set this value to be a bit above your rated DOWNLOAD speed in megabits/second.
-set yrange [:70]
+set yrange [:100]
 
 set key box
 set output "../images/dow-down.jpg"

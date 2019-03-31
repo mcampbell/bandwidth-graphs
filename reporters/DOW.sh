@@ -19,8 +19,8 @@ ruby ../utils/stdev.rb "$DB" "select day_of_week, metric_value from bandwidth wh
 ruby ../utils/stdev.rb "$DB" "select day_of_week, metric_value from bandwidth where metric_type = 'down';" > ./down_stdev.dow.dat
 
 ## CHANGEME!  Change these values (10, 50) to whatever your rated upload and download speeds are (in megabits/second)
-sqlite3 -column "$DB" "select day_of_week, 10 from bandwidth group by day_of_week order by 1"    > ./up_rated.dow.dat
-sqlite3 -column "$DB" "select day_of_week, 50 from bandwidth group by day_of_week order by 1"    > ./down_rated.dow.dat
+sqlite3 -column "$DB" "select day_of_week, 15 from bandwidth group by day_of_week order by 1"    > ./up_rated.dow.dat
+sqlite3 -column "$DB" "select day_of_week, 75 from bandwidth group by day_of_week order by 1"    > ./down_rated.dow.dat
 ################################################################################
 # No changes below this line necessary.
 ################################################################################

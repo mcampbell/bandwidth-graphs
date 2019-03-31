@@ -21,8 +21,8 @@ ruby ../utils/stdev.rb "$DB" "select hour_of_week, metric_value from bandwidth w
 
 ################################################################################
 ## CHANGEME!  Change these values (10, 50) to whatever your rated upload and download speeds are (in megabits/second)
-sqlite3 -column "$DB" "select hour_of_week, 10 from bandwidth group by hour_of_week order by 1"    > ./up_rated.how.dat
-sqlite3 -column "$DB" "select hour_of_week, 50 from bandwidth group by hour_of_week order by 1"    > ./down_rated.how.dat
+sqlite3 -column "$DB" "select hour_of_week, 15 from bandwidth group by hour_of_week order by 1"    > ./up_rated.how.dat
+sqlite3 -column "$DB" "select hour_of_week, 75 from bandwidth group by hour_of_week order by 1"    > ./down_rated.how.dat
 ################################################################################
 # No changes below this line necessary.
 ################################################################################
